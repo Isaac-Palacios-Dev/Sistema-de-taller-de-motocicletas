@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+
+# Variables de entorno
+.env
+
+# Base de datos local
+db.sqlite3
+
+# Estáticos recolectados (WhiteNoise/collectstatic)
+staticfiles/
+
+# Sistema operativo
+.DS_Store
+
+# Editores / IDEs
+.vscode/
+
+# Estado local de oh-my-claudecode (no se sube)
+.omc/

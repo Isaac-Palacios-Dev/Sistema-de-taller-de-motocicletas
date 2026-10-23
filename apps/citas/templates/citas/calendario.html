@@ -1,0 +1,132 @@
+{% extends "core/base.html" %}
+
+{% block title %}Calendario de citas — Taller{% endblock %}
+
+{% block content %}
+
+<p class="eyebrow mb-1">agenda del taller</p>
+<h2 class="mb-4">Calendario de citas</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex gap-1">
+        <a href="?modo=dia&fecha={{ fecha_base|date:'Y-m-d' }}{% if filtro_mecanico %}&mecanico={{ filtro_mecanico }}{% endif %}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}"
+           class="btn btn-sm rounded-pill {% if modo == 'dia' %}btn-dark{% else %}btn-outline-dark{% endif %}">Día</a>
+        <a href="?modo=semana&fecha={{ fecha_base|date:'Y-m-d' }}{% if filtro_mecanico %}&mecanico={{ filtro_mecanico }}{% endif %}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}"
+           class="btn btn-sm rounded-pill {% if modo == 'semana' %}btn-dark{% else %}btn-outline-dark{% endif %}">Semana</a>
+        <a href="?modo=mes&fecha={{ fecha_base|date:'Y-m-d' }}{% if filtro_mecanico %}&mecanico={{ filtro_mecanico }}{% endif %}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}"
+           class="btn btn-sm rounded-pill {% if modo == 'mes' %}btn-dark{% else %}btn-outline-dark{% endif %}">Mes</a>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <a href="?modo={{ modo }}&fecha={{ fecha_anterior|date:'Y-m-d' }}{% if filtro_mecanico %}&mecanico={{ filtro_mecanico }}{% endif %}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}"
+           class="text-decoration-none cal-nav" aria-label="Anterior">‹</a>
+        <span class="cal-title">
+            {% if modo == 'dia' %}
+                {{ fecha_base|date:'l d' }} de {{ fecha_base|date:'F Y' }}
+            {% elif modo == 'mes' %}
+                {{ mes_actual|date:'F Y' }}
+            {% else %}
+                Semana {{ lunes|date:'d' }} – {{ domingo|date:'d' }} {{ domingo|date:'F Y' }}
+            {% endif %}
+        </span>
+        <a href="?modo={{ modo }}&fecha={{ fecha_siguiente|date:'Y-m-d' }}{% if filtro_mecanico %}&mecanico={{ filtro_mecanico }}{% endif %}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}"
+           class="text-decoration-none cal-nav" aria-label="Siguiente">›</a>
+    </div>
+</div>
+
+{% if modo == 'dia' %}
+{% if citas_dia %}
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th class="text-muted fw-normal small">HORA</th>
+                <th class="text-muted fw-normal small">CLIENTE</th>
+                <th class="text-muted fw-normal small">MOTOCICLETA</th>
+                <th class="text-muted fw-normal small">ESTADO</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cita in citas_dia %}
+            <tr>
+                <td class="mono">{{ cita.hora|time:'H:i' }}</td>
+                <td>{{ cita.cliente.nombre_completo }}</td>
+                <td class="mono">{{ cita.motocicleta.placa }}</td>
+                <td><span class="badge rounded-pill status-badge status-{{ cita.estado.tipo }} px-3 py-2" style="--sb: {{ cita.estado.color }}; --sb-rgb: {{ cita.estado.color_rgb }};">{{ cita.estado.nombre }}</span></td>
+                <td class="text-end">
+                    <a href="{% url 'citas:cita_admin_detalle' cita.id %}" class="btn btn-sm btn-outline-dark">Ver detalle</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-light text-center py-4">No hay citas para este día.</div>
+{% endif %}
+
+{% elif modo == 'mes' %}
+<div class="cal-grid">
+    {% for nombre in nombres_dias %}
+    <div class="cal-head">{{ nombre }}</div>
+    {% endfor %}
+    {% for semana in semanas %}
+        {% for dia in semana %}
+        <div class="cal-cell {% if not dia.del_mes %}cal-out{% endif %}">
+            <div class="cal-day {% if dia.es_hoy %}cal-today{% endif %}">{{ dia.fecha|date:'d' }}</div>
+            {% for cita in dia.citas %}
+            <a href="{% url 'citas:cita_admin_detalle' cita.id %}" class="cal-event text-decoration-none">
+                {{ cita.hora|time:'H:i' }} {{ cita.motocicleta.placa }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="cal-grid">
+    {% for dia in dias_semana %}
+    <div class="cal-cell cal-week {% if dia.fecha.weekday == 6 %}cal-out{% endif %}">
+        <div class="cal-day {% if dia.es_hoy %}cal-today{% endif %}">{{ dia.nombre }} {{ dia.fecha|date:'d' }}</div>
+        {% for cita in dia.citas %}
+        <a href="{% url 'citas:cita_admin_detalle' cita.id %}" class="cal-event text-decoration-none">
+            {{ cita.hora|time:'H:i' }} {{ cita.motocicleta.placa }}
+        </a>
+        {% empty %}
+        {% if dia.fecha.weekday == 6 %}
+        <span class="text-muted small">Cerrado</span>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="get" class="d-flex gap-3 mt-4 align-items-center flex-wrap">
+    <input type="hidden" name="modo" value="{{ modo }}">
+    <input type="hidden" name="fecha" value="{{ fecha_base|date:'Y-m-d' }}">
+
+    <span class="eyebrow mb-0">filtros</span>
+
+    <select name="mecanico" class="form-select w-auto" aria-label="Filtrar por mecánico" onchange="this.form.submit()">
+        <option value="">Todos los mecánicos</option>
+        {% for mec in mecanicos %}
+        <option value="{{ mec.dui }}" {% if filtro_mecanico == mec.dui %}selected{% endif %}>
+            {{ mec.nombre_completo }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <select name="estado" class="form-select w-auto" aria-label="Filtrar por estado" onchange="this.form.submit()">
+        <option value="">Todos los estados</option>
+        {% for estado in estados %}
+        <option value="{{ estado.codigo }}" {% if filtro_estado == estado.codigo %}selected{% endif %}>
+            {{ estado.nombre }}{% if not estado.activo %} (inactivo){% endif %}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+{% endblock %}

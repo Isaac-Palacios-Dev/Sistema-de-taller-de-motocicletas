@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Iniciar sesión · Taller de Motos{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card text-center">
+        {% include 'core/_brand_mark.html' %}
+        <p class="eyebrow mb-0 mt-3">acceso al sistema</p>
+        <h1>Sistema de Taller</h1>
+        <p class="text-muted mb-4">Ingresá con tu DUI o correo electrónico</p>
+
+        {% if error %}
+        <div class="alert alert-danger text-start" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" class="text-start">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="identifier" class="form-label">DUI o correo electrónico</label>
+                <input type="text" class="form-control" id="identifier" name="identifier"
+                       placeholder="00000000-0 o correo@ejemplo.com" autocomplete="username" required autofocus>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="••••••••" autocomplete="current-password" required>
+                    {% include "core/_pw_toggle_boton.html" with input_id="password" %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-dark btn-lg w-100">Iniciar sesión</button>
+        </form>
+
+        <div class="d-flex flex-column gap-2 mt-4 small">
+            <a href="{% url 'usuarios:password_reset_solicitar' %}" class="text-muted">¿Olvidaste tu contraseña?</a>
+            <a href="{% url 'usuarios:registro_cliente' %}">¿No tenés cuenta? Registrate</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
